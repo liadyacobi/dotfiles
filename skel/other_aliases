@@ -1,0 +1,9 @@
+# Global Aliases
+mkd() {
+	mkdir -p -- "$1" &&
+      cd -P -- "$1"
+}
+
+alias l='ls -lh'
+alias la='l -a'
+alias ll='l'

@@ -5,7 +5,7 @@ case $- in
 esac
 
 # Path to your oh-my-bash installation.
-export OSH=/home/limon/.oh-my-bash
+export OSH=$HOME/.oh-my-bash
 
 # Set name of the theme to load. Optionally, if you set this to "random"
 # it'll load a random theme each time that oh-my-bash is loaded.
@@ -112,3 +112,11 @@ source "$OSH"/oh-my-bash.sh
 # Example aliases
 # alias bashconfig="mate ~/.bashrc"
 # alias ohmybash="mate ~/.oh-my-bash"
+# Global Aliases
+mkd() {
+  mkdir -p -- "$1" && cd -P -- "$1"
+}
+
+alias l='ls -lh'
+alias la='l -a'
+alias ll='l'
