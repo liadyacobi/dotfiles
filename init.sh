@@ -11,84 +11,60 @@ if [ "$EUID" -ne 0 ]; then
   exit 2
 fi
 
-VERBOSE=0
-
-while getopts 'v' flag; do
-  case "${flag}" in
-    v) VERBOSE='true' ;;
-    *) print_usage
-       exit 1 ;;
-  esac
-done
-
-function log() {
-    if [[ $verbose -eq 1 ]]; then
-        italic_log "$@"
-    fi
+# Easily execute tasks as the user who executed the script with the 'sudo' command
+function as_user() {
+  su -c '$@' -- $SUDO_USER
 }
+USER_HOME=/home/$SUDO_USER
 
 # Install Vim-Plug
-log "Installing Vim-Plug"
-curl -fLo $HOME/.vim/autoload/plug.vim --create-dirs \
-    https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+su -c "curl -fLo $USER_HOME/.vim/autoload/plug.vim --create-dirs \
+    https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim" -- $SUDO_USER
 
 # Rename files in home dir
-log "Renaming .files to homedir ($HOME). renaming old files as $HOME/.<name>.old"
-mv $HOME/.bashrc $HOME/.bashrc.$(date)
-mv $HOME/.bash_profile $HOME/.bash_profile.$(date)
-mv $HOME/.vimrc $HOME/.vimrc.$(date)
+mv "$USER_HOME/.bashrc" "$USER_HOME/.bashrc.$(date)"
+mv "$USER_HOME/.bash_profile" "$USER_HOME/.bash_profile.$(date)"
+mv "$USER_HOME/.vimrc" "$USER_HOME/.vimrc.$(date)"
+
 
 # Install oh-my-bash
-log "Installing oh-my-bash"
-curl -fsSL https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh
+su -c "$(curl -fsSL https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh)" -- $SUDO_USER
 
 # Copy all files to user home directory
-log "Copying all dotfiles to homedir ($HOME)"
-cp ./skel/.??* $HOME/
-echo `cat ./skel/other_aliases` >> $HOME/.bashrc
-
-# Source new files
-log "Sourcing new files"
-source $HOME/.bashrc
-source $HOME/.bash_profile
+su -c "cp ./skel/.??* $USER_HOME/" -- $SUDO_USER
 
 # Vim setup
-log "Installing Python3 and Compiling tools"
 yum update -y
 yum install -y python3 gcc make ncurses ncurses-devel
 
 yum install -y ctags git tcl-devel ruby ruby-devel python-devel python3-devel
 
-log "Removing existing vim installations"
 yum remove -y vim-enhanced vim-common vim-filesystem 2>/dev/null
 
-log "Cloning vim from git"
+# Create vim dir and clone vim from github
 VIM_REPO_DIR=/usr/share/vim/repo
 mkdir -p $VIM_REPO_DIR
 git clone https://github.com/vim/vim.git $VIM_REPO_DIR
 
-log "Configuring Vim 8"
+# Configuring Vim 8
 LDFLAGS=-rdynamic $VIM_REPO_DIR/configure --with-features=huge \
   --enable-python3interp \
   --enable-multibyte \
   --enable-rubyinterp \
+  --with-python3-config-dir=$(python3-config --configdir)
 
-log "Build Vim"
-cd $VIM_REPO_DIR && make
+# Build and compile vim
+cd $VIM_REPO_DIR && make && make install
 
-log "Install Vim"
-cd $VIM_REPO_DIR && make install
-
-log "Add vim to /bin"
+# Create link in bin dir
+rm /bin/vim 2>/dev/null
 ln -s $VIM_REPO_DIR/src/vim /bin/vim
 
-log "Installed Vim:"
-vim -version | head -n 1
+# Install vim plugins
+su -c "vim -E -s -u '$USER_HOME/.vimrc' +'PlugInstall --sync' +qa" -- $SUDO_USER
 
-log "Installing Vim Plugins"
-vim -E -s -u "$HOME/.vimrc" +'PlugInstall --sync' +qa
+# Installing You Complete Me Tools
+su -c "cd $USER_HOME/.vim/plugged/YouCompleteMe && ./install.py --all" -- $SUDO_USER
 
-log "Installing You Complete Me Tools"
-su -u $USER "cd $HOME/.vim/plugged/YouCompleteMe && ./install.py --all"
-
-
+echo SUCCESS!!
+echo "Now please source your .bashrc file: $(italic_log source ~/.bashrc)" 
