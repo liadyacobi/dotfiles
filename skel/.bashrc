@@ -118,5 +118,5 @@ mkd() {
 }
 
 alias l='ls -lh'
-alias la='l -a'
+alias la='l -A'
 alias ll='l'

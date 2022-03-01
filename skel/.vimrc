@@ -9,11 +9,16 @@
 :set expandtab
 :set confirm
 :set incsearch
+set timeout
+set ttimeout
+set timeoutlen=3000
+set ttimeoutlen=50
+set backspace=indent,eol,start
 
 execute "set <M-j>=\ej"
-execute "set <M-j>=\ej"
-execute "set <M-j>=\ej"
-execute "set <M-j>=\ej"
+execute "set <M-k>=\ek"
+execute "set <M-l>=\el"
+execute "set <M-h>=\eh"
 nmap <M-l> :tabprevious
 nmap <M-h> :tabnext
 
@@ -36,12 +41,7 @@ Plug 'junegunn/fzf.vim'
 call plug#end()
 
 " Theme
- syntax enable
-" for vim 8
- if (has("termguicolors"))
-  set termguicolors
- endif
-
+syntax enable
 colorscheme OceanicNext
 
 " Key Mapping
@@ -78,3 +78,4 @@ inoremap {<CR> {<CR>}<ESC>O
 inoremap {;<CR> {<CR>};<ESC>O
 
 let g:indentLine_char = '⦙'
+let NERDTreeShowHidden=1
